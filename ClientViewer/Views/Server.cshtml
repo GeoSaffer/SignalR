@@ -1,0 +1,32 @@
+﻿@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Scripts
+{
+    <script>
+        $(function () {
+            var hub = $.connection.clientViewerHub,
+                clientViewerModel = {
+                    image: ""
+                };
+
+            hub.client.updateView = function (model) {
+                clientViewerModel = model;
+                $("#mainViewer").attr("src", model.image);
+            }
+
+            //start the connection to the hub, 
+            //so that we can get updates from the server
+            $.connection.hub.start().done();
+
+            //The Server app does not need to send anything to the server,
+            //so no server update function needed here
+
+        });
+    </script>
+}
+
+<div id="">
+    <img id="mainViewer" style="background: black;"/>
+</div>

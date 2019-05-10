@@ -1,0 +1,71 @@
+﻿@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Scripts
+{
+    <script>
+        $(function() {
+            var hub = $.connection.clientViewerHub,
+                // Send a maximum of 10 messages per second
+                // (mouse movements trigger a lot of messages)
+                messageFrequency = 10,
+                // Determine how often to send messages in
+                // time to abide by the messageFrequency
+                updateRate = 1000 / messageFrequency,
+                clientViewerModel = {
+                    image: ""
+                },
+                moved = false;
+
+            //The Client app does not get updated,
+            //so no client update function needed here
+
+            $.connection.hub.start().done(function() {
+                $(document).on('mousemove',
+                    function () {
+                        moved = true;
+                    });
+                $(document).click(
+                    function() {
+                        moved = true;
+                    }
+                );
+                $(document).keypress(
+                    function (event) {
+                        moved = true;
+                    }
+                );
+                // Start the client side server update interval
+                setInterval(updateServerModel, updateRate);
+            });
+
+            function updateServerModel() {
+                if (moved) {
+                    html2canvas(document.querySelector("#capture"), { logging: false })
+                        .then(canvas => {
+                            clientViewerModel.image = canvas.toDataURL("image/png");
+                        });
+                    //Send update to server
+                    hub.server.updateView(clientViewerModel);
+                    //reset the move detection
+                    moved = false;
+                }
+            }
+
+        });
+    </script>
+}
+<div id="capture">
+    <label>Name: </label><input type="text" id="displayname" />
+    <div id="chatHistory" style="height: 200px; 
+                                  max-height: 200px; 
+                                  outline: black; 
+                                  outline-style: dashed; 
+                                  overflow-y: scroll; scroll-behavior: auto; background-color: black;">
+        <ul id="discussion">
+        </ul>
+    </div>
+    <input type="text" id="message" />
+    <input type="button" id="sendmessage" />
+</div>

@@ -1,0 +1,70 @@
+﻿@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Scripts
+{
+    <script>
+        $(function () {
+            var chatHub = $.connection.chatHub,
+                chatModel = {
+                    name: "",
+                    message: ""
+                };
+
+            chatHub.client.updateChat = function (model) {
+                chatModel = model;
+                // Html encode display name and message.
+                var encodedName = $('<div />').text(model.name).html();
+                var encodedMsg = $('<div />').text(model.message).html();
+                // Add the message to the page.
+                $('#discussion').append('<li><strong>' + encodedName
+                    + '</strong>:&nbsp;&nbsp;' + encodedMsg + '</li>');
+                //scroll to show latest message
+                var elem = document.getElementById('chatHistory');
+                elem.scrollTop = elem.scrollHeight;
+            }
+
+            $.connection.hub.start().done(function () {
+                $('#sendmessage').click(function () {
+                    sendMessage();
+                });
+                $('#message').keypress(function (event) {
+                    var keycode = (event.keyCode ? event.keyCode : event.which);
+                    if (keycode === '13' || keycode === 13) {
+                        sendMessage();
+                    }
+                });
+            });
+
+            function sendMessage() {
+                chatModel.name = $('#displayname').val();
+                chatModel.message = $('#message').val();
+                // Call the Send method on the hub.
+                updateServerModel();
+                // Clear text box and reset focus for next comment.
+                $('#message').val('').focus();
+
+               
+            }
+
+            function updateServerModel() {
+                // Only update server if we have a new movement
+                chatHub.server.updateModel(chatModel);
+              //  chatHub.server.send(chatModel.name, chatModel.message);
+            }
+
+        });
+    </script>
+}
+
+<label>Name: </label><input type="text" id="displayname" />
+<div id="chatHistory" style="height: 200px; max-height: 200px; outline: black; outline-style: dashed; overflow-y: scroll; scroll-behavior: auto">
+    <ul id="discussion">
+    </ul>
+</div>
+
+
+<input type="text" id="message" />
+<input type="button" id="sendmessage" />
+
