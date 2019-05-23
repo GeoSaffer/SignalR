@@ -1,0 +1,140 @@
+﻿@{
+    Layout = "/Views/Shared/_Layout.cshtml";
+}
+@section Styles{
+    <style>
+        html, body {
+            min-height: 300px;
+            height: 100%;
+            margin: 0;
+            background-color: lightgrey;
+        }
+        div.mainBody {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            min-height: 90%;
+            margin-top: 20px;
+            margin-left: 20px;
+            margin-right: 20px;
+            margin-bottom: 20px;
+        }
+
+        .nameSection {
+            padding-bottom: 15px;
+        }
+
+        #chatHistory {
+            outline: black;
+            outline-style: solid;
+            background-color: lightgrey;
+            overflow-y: scroll;
+            scroll-behavior: auto;
+            
+            position:fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            margin-top: 60px;
+            margin-left: 20px;
+            margin-right: 20px;
+            margin-bottom: 60px;
+        }
+
+        .messageSection {
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            margin-top: 20px;
+            margin-left: 20px;
+            margin-right: 20px;
+            margin-bottom: 20px;
+            white-space: nowrap;
+        }
+
+        #message {
+            width: 95%;
+            
+        }
+
+        ul#discussion {
+            list-style-type: none;
+        }
+    </style>
+}
+
+@section Scripts
+{
+    <script>
+        $(function() {
+            var chatHub = $.connection.chatHub,
+                chatModel = {
+                    name: "",
+                    message: ""
+                };
+
+            chatHub.client.updateChat = function(model) {
+                chatModel = model;
+                // Html encode display name and message.
+                var encodedName = $('<div />').text(model.name).html();
+                var encodedMsg = $('<div />').text(model.message).html();
+                // Add the message to the page.
+                $('#discussion').append('<li><strong>' + encodedName + '</strong>:&nbsp;&nbsp;' + encodedMsg + '</li>');
+                //scroll to show latest message
+                var elem = document.getElementById('chatHistory');
+                elem.scrollTop = elem.scrollHeight;
+            }
+
+            $.connection.hub.start().done(function() {
+                $('#sendmessage').click(function() {
+                    sendMessage();
+                });
+                $('#message').keypress(function(event) {
+                    var keycode = (event.keyCode ? event.keyCode : event.which);
+                    if (keycode === '13' || keycode === 13) {
+                        if ($('#message').val().trim() !== "" && $('#displayname').val().trim() !== "") {
+                            sendMessage();
+                        }
+                    }
+                });
+            });
+
+            function sendMessage() {
+                chatModel.name = $('#displayname').val();
+                chatModel.message = $('#message').val();
+                // Call the Send method on the hub.
+                updateServerModel();
+                // Clear text box and reset focus for next comment.
+                $('#message').val('').focus();
+
+            }
+
+            function updateServerModel() {
+                // Only update server if we have a new movement
+                chatHub.server.updateModel(chatModel);
+                //  chatHub.server.send(chatModel.name, chatModel.message);
+            }
+
+        });
+    </script>
+}
+
+<div class="mainBody">
+    <div class="nameSection">
+        <label>Name: </label><input type="text" id="displayname" />
+    </div>
+
+    <div id="chatHistory">
+        <ul id="discussion"></ul>
+        &nbsp;
+    </div>
+
+    <div class="messageSection">
+        <input type="text" id="message" />
+        <input type="button" id="sendmessage" />
+    </div>
+</div>

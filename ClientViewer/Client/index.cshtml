@@ -1,0 +1,21 @@
+﻿@{
+    Layout = "~/Views/Shared/_ClientLayout.cshtml";
+}
+
+@section Scripts
+{
+   
+}
+<div id="capture">
+    <label>Name: </label><input type="text" id="displayname" />
+    <div id="chatHistory" style="height: 200px; 
+                                  max-height: 200px; 
+                                  outline: black; 
+                                  outline-style: dashed; 
+                                  overflow-y: scroll; scroll-behavior: auto; background-color: black;">
+        <ul id="discussion">
+        </ul>
+    </div>
+    <input type="text" id="message" />
+    <input type="button" id="sendmessage" />
+</div>

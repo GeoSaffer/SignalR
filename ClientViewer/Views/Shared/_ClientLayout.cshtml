@@ -1,0 +1,72 @@
+﻿<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>Client Viewer Demo</title>
+    @RenderSection("Styles",false)
+</head>
+<body>
+
+    <div>
+        @RenderBody()
+    </div>
+    <script src="~/Scripts/jquery-3.4.1.min.js"></script>
+    <script src="~/Scripts/jquery-ui-1.12.1.min.js"></script>
+    <script src="~/Scripts/jquery.signalR-2.4.1.js"></script>
+    <script src="/signalr/hubs"></script>
+    <script src="~/Scripts/Html2Canvas.js"></script>
+    <script>
+        $(function() {
+            var hub = $.connection.clientViewerHub,
+                // Send a maximum of 10 messages per second
+                // (mouse movements trigger a lot of messages)
+                messageFrequency = 10,
+                // Determine how often to send messages in
+                // time to abide by the messageFrequency
+                updateRate = 1000 / messageFrequency,
+                clientViewerModel = {
+                    image: ""
+                },
+                moved = false;
+
+            //The Client app does not get updated,
+            //so no client update function needed here
+
+            $.connection.hub.start().done(function() {
+                $(document).on('mousemove',
+                    function () {
+                        moved = true;
+                    });
+                $(document).click(
+                    function() {
+                        moved = true;
+                    }
+                );
+                $(document).keypress(
+                    function (event) {
+                        moved = true;
+                    }
+                );
+                // Start the client side server update interval
+                setInterval(updateServerModel, updateRate);
+            });
+
+            function updateServerModel() {
+                if (moved) {
+                    html2canvas(document.querySelector("#capture"), { logging: false })
+                        .then(canvas => {
+                            clientViewerModel.image = canvas.toDataURL("image/png");
+                        });
+                    //Send update to server
+                    hub.server.updateView(clientViewerModel);
+                    //reset the move detection
+                    moved = false;
+                }
+            }
+
+        });
+    </script>
+    @RenderSection("Scripts",false)
+</body>
+</html>
